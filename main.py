@@ -34,4 +34,3 @@ fig, ax = plt.subplots()
 ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
 ax.axis('equal')
 
-st.pyplot(fig)
