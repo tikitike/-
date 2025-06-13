@@ -1,61 +1,47 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
+import math
 
-st.set_page_config(page_title="화재 통계 분석", layout="wide")
+st.set_page_config(page_title="예상 대피 시간 계산기", layout="centered")
+st.title("🚪 건물 대피 시간 예측 도구")
 
-st.title("🔥 전국/지역별 연도별 화재 통계 분석 대시보드")
+st.markdown("인원 수, 출입구 수, 복도 길이 등을 입력하면 예상 대피 시간을 계산해드립니다.")
 
-# 1. 데이터 불러오기
-@st.cache_data
-def load_data():
-    df = pd.read_csv("fire_data.csv")  # CSV 경로
-    return df
+# 입력 받기
+num_people = st.number_input("인원 수", min_value=1, max_value=10000, value=100)
+num_exits = st.number_input("출입구 수", min_value=1, max_value=20, value=2)
+corridor_length = st.number_input("복도 길이 (m)", min_value=1.0, max_value=500.0, value=30.0)
+corridor_width = st.number_input("복도 폭 (m)", min_value=0.5, max_value=10.0, value=2.0)
 
-df = load_data()
+# 기준 값
+walking_speed = 1.2  # 평균 보행 속도 (m/s)
+exit_flow_rate = 1.3  # 출입구 1개당 통과 인원 수 (명/초)
 
-# 2. 필터링 옵션
-years = sorted(df['연도'].unique())
-regions = ['전국'] + sorted(df['지역'].unique())
+# 계산
+corridor_time = corridor_length / walking_speed  # 복도 통과 시간 (초)
+exit_time = num_people / (num_exits * exit_flow_rate)  # 출입구 통과 시간 (초)
 
-col1, col2 = st.columns(2)
-with col1:
-    selected_years = st.multiselect("연도 선택", years, default=years)
-with col2:
-    selected_region = st.selectbox("지역 선택", regions)
+total_time_sec = corridor_time + exit_time
+total_time_min = total_time_sec / 60
 
-# 3. 필터 적용
-filtered_df = df[df['연도'].isin(selected_years)]
-if selected_region != '전국':
-    filtered_df = filtered_df[filtered_df['지역'] == selected_region]
+# 출력
+st.subheader("⏱ 예상 대피 시간:")
+st.markdown(f"**{total_time_sec:.1f} 초**  (~ {total_time_min:.1f} 분)")
 
-# 4. 통계 요약
-total_cases = filtered_df['발생건수'].sum()
-total_deaths = filtered_df['사망자수'].sum()
-total_injured = filtered_df['부상자수'].sum()
-total_loss = filtered_df['재산피해액'].sum()
+# 위험 레벨 표시
+if total_time_min < 2:
+    st.success("대피 시간 양호 ✅")
+elif total_time_min < 5:
+    st.warning("주의: 대피 시간이 다소 깁니다 ⚠️")
+else:
+    st.error("위험: 대피 시간이 너무 깁니다 ❗")
 
-st.subheader("📊 통계 요약")
-st.metric("총 화재 발생건수", f"{total_cases:,} 건")
-st.metric("총 사망자 수", f"{total_deaths:,} 명")
-st.metric("총 부상자 수", f"{total_injured:,} 명")
-st.metric("총 재산 피해액", f"{total_loss:,} 원")
+# 참고 정보
+with st.expander("📘 참고 기준 보기"):
+    st.markdown("""
+    - 평균 보행 속도: **1.2 m/s**
+    - 출입구 1개당 통과 속도: **1.3명/초**
+    - 실제 대피 시간은 혼잡도, 시야 확보, 장애물 여부에 따라 달라질 수 있습니다.
+    """)
 
-# 5. 연도별 발생 건수 시각화
-st.subheader("📈 연도별 화재 발생 추이")
-fig = px.line(filtered_df.groupby('연도')['발생건수'].sum().reset_index(),
-              x='연도', y='발생건수', markers=True, title='연도별 화재 발생건수')
-st.plotly_chart(fig, use_container_width=True)
 
-# 6. 원인별 비율
-st.subheader("🔥 주요 원인별 비율")
-cause_fig = px.pie(filtered_df, names='주요원인', title='화재 주요 원인 비율')
-st.plotly_chart(cause_fig, use_container_width=True)
-
-# 7. 지역별 분포 (전국일 때만)
-if selected_region == '전국':
-    st.subheader("📍 지역별 화재 건수")
-    region_fig = px.bar(df[df['연도'].isin(selected_years)].groupby('지역')['발생건수'].sum().reset_index(),
-                        x='지역', y='발생건수', title='지역별 화재 발생 건수')
-    st.plotly_chart(region_fig, use_container_width=True)
 
