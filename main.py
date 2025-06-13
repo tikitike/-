@@ -1,25 +1,12 @@
 import streamlit as st
+import matplotlib.pyplot as plt
 
-st.title("맞춤형 다이어트 추천")
+st.title("건물 화재 위험도 예측")
 
-# 이름 입력 받기
-name = st.text_input("이름을 입력하세요:")
+# 사용자 입력
+floors = st.number_input("층수 입력 (층)", min_value=1, max_value=100, value=5)
+material = st.selectbox("건물 재질 선택", ["목재", "철근 콘크리트", "강철", "복합재"])
+area = st.number_input("건물 면적 입력 (제곱미터)", min_value=10, max_value=10000, value=500)
 
-def recommend_diet(name):
-    # 간단하게 이름에 따라 다이어트 방법 추천
-    # 여기서는 이름 첫 글자에 따라 다르게 추천
-    if not name:
-        return "이름을 입력해주세요!"
-    first_char = name[0].lower()
-    if first_char in "abc":
-        return f"{name}님, 저탄수화물 다이어트를 추천합니다!"
-    elif first_char in "def":
-        return f"{name}님, 간헐적 단식 다이어트를 추천합니다!"
-    elif first_char in "ghi":
-        return f"{name}님, 지중해식 다이어트를 추천합니다!"
-    else:
-        return f"{name}님, 꾸준한 유산소 운동과 균형 잡힌 식단을 추천합니다!"
-
-if name:
-    result = recommend_diet(name)
-    st.write(result)
+# 화재 위험도 계산 (예시)
+#
